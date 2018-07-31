@@ -13,3 +13,12 @@ List
 
 `2_mycrk_by_cli3nt
 <https://crackmes.one/crackme/5ab77f6633c5d40ad448cbfe>`_
+
+Tools
+=====
+
+`Radare2
+<https://www.radare.org/r/down.html>`_
+
+`OllyDbg
+<http://www.ollydbg.de/>`_
