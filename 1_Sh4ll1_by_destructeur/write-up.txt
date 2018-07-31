@@ -1,0 +1,51 @@
+Use radare2 to analysis
+
+	r2 ./crackMe1.bin
+
+In radare2
+
+	aa
+	pdf@sym.main
+
+...
+0x00000a91      e83affffff     call sym.systemv
+0x00000a96      e851ffffff     call sym.systemo
+...
+
+First, the program call systemv, then call systemo
+
+Analysis systemv
+
+	pdf@sym.systemv
+
+0x000009d4      c745fc050000.  mov dword [local_4h], 5
+0x000009db      c745f8070000.  mov dword [local_8h], 7
+0x000009e2      c745f4f50100.  mov dword [local_ch], 0x1f5
+
+Looks like it prepares some var for systemo
+
+Analysis systemo
+
+	pdf@sym.systemo
+
+0x000009f4      8b45f8         mov eax, dword [local_8h]	; eax = 7
+0x000009f7      0145fc         add dword [local_4h], eax	; [local_4h] = 12
+0x000009fa      8b45fc         mov eax, dword [local_4h]	; eax = 12
+0x000009fd      6bc02d         imul eax, eax, 0x2d		; eax = 540
+0x00000a00      8945f4         mov dword [local_ch], eax	; [local_ch] = 540
+0x00000a03      c745f0000000.  mov dword [local_10h], 0		; [local_10h] = 0
+
+At this point, [local_ch] = 540
+
+0x00000a1d      488d45f0       lea rax, qword [local_10h]
+0x00000a21      4889c6         mov rsi, rax
+0x00000a24      488d3d351620.  lea rdi, qword obj.std::cin ; 0x202060
+0x00000a2b      e840feffff     call sym.std::istream::operator___int
+0x00000a30      8b45f0         mov eax, dword [local_10h]
+0x00000a33      3b45f4         cmp eax, dword [local_ch]
+0x00000a36      752a           jne 0xa62
+
+[local_10h] save the input password, then compare with [local_ch]
+If [local_10h] == [local_ch] => good boy
+
+Conclusion, correct password is 540
