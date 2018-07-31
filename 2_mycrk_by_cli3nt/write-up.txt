@@ -1,0 +1,25 @@
+Use radare2
+
+	r2 ./mycrk
+
+In radare2, analysis main
+
+	aa
+	pdf@sym.main
+
+0x080483d4      c745fc671e01.  mov dword [local_4h], 0x11e67	; [local_4h] = 73319
+0x080483db      c745f870125b.  mov dword [local_8h], 0x5b1270	; [local_8h] = 5968496
+
+0x080483fc      8d45f4         lea eax, dword [local_ch]	; [local_ch] saves input
+0x080483ff      50             push eax
+0x08048400      6822850408     push 0x8048522
+0x08048405      e8bafeffff     call sym.imp.scanf          	; int scanf(const char *format)
+0x0804840a      83c410         add esp, 0x10
+0x0804840d      8b45f8         mov eax, dword [local_8h]
+0x08048410      3b45f4         cmp eax, dword [local_ch]
+0x08048413      751d           jne 0x8048432			; if not equal => bad boy
+
+Compare [local_8h] and [local_ch]
+If those two are equal => good boy
+
+Conclusion, the correct password is 5968496
