@@ -1,0 +1,82 @@
+Use radare
+
+	r2 ./kgm1
+
+In radare2, find all symbols
+
+	fs symbols
+	f
+
+0x08048422 256 main
+0x08048380 1 entry0
+0x0804859c 4 obj._IO_stdin_used
+0x08049714 4 obj.stdin
+
+In radare2, analysic main
+
+	aa
+	pdf@main
+
+0x0804845a      8d5c2414       lea ebx, [s]                ; 0x14 ; 20
+0x0804845e      891c24         mov dword [esp], ebx        ; char *s
+0x08048461      e8d2feffff     call sym.imp.fgets          ; char *fgets(char *s, int size, FILE *stream)
+0x08048466      891c24         mov dword [esp], ebx        ; const char *s
+0x08048469      e8eafeffff     call sym.imp.strlen         ; size_t strlen(const char *s)
+0x0804846e      83f80a         cmp eax, 0xa                ; 10
+
+[s] is input key. eax saves input length
+Compare eax with 10, if eax != 10 => bad boy
+But fgets reads '\n' => input key must have 9 chars
+
+ |   0x08048473      ba01000000     mov edx, 1			; counter
+ |   0x08048478      8d4c2414       lea ecx, [s]                ; 0x14 ; 20
+.--> 0x0804847c      0fb682079704.  movzx eax, byte [edx + 0x8049707] ; [0x8049707:1]=8
+:|   0x08048483      30440aff       xor byte [edx + ecx - 1], al
+:|   0x08048487      83c201         add edx, 1
+:|   0x0804848a      83fa09         cmp edx, 9                  ; compare counter with 9
+`==< 0x0804848d      75ed           jne 0x804847c
+
+Fist 8 chars from the input, xor with 8 bytes in 0x8049708 in order
+
+Check 8 bytes in 0x8049708
+
+	px @0x8049708
+
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x08049708  4536 abc8 cc11 e37a 0000 0000 0000 0000  E6.....z........
+
+So they are 0x45, 0x36, 0xab, 0xc8, 0xcc, 0x11, 0xe3, 0x7a
+
+     0x0804848f      b900000000     mov ecx, 0
+ |   0x08048494      b200           mov dl, 0
+ |   0x08048496      8d5c2414       lea ebx, [s]                ; 0x14 ; 20
+.--> 0x0804849a      0fbe041a       movsx eax, byte [edx + ebx]
+:|   0x0804849e      01c1           add ecx, eax
+:|   0x080484a0      83c201         add edx, 1
+:|   0x080484a3      83fa08         cmp edx, 8                  ; 8
+`==< 0x080484a6      75f2           jne 0x804849a
+
+ecx = sum of first 8 chars from the input (after xor with 8 bytes in 0x8049708)
+
+0x080484a8      0fbe54241c     movsx edx, byte [local_1ch] ; [0x1c:1]=255 ; 28
+0x080484ad      0fb6c1         movzx eax, cl
+0x080484b0      39c2           cmp edx, eax
+
+Use gdb to see [local_1ch]
+
+	info registers esp
+
+esp            0xffffd740	0xffffd740
+
+	print (char)*(0xffffd740+0x1c)
+
+Looks like [local_1ch] is 9th char from input
+So program compares sum of first 8 chars (after xor) with 9th char
+
+0x080484b4      8d429f         lea eax, [edx - 0x61]
+0x080484b7      83f819         cmp eax, 0x19               ; 25
+0x080484ba      7713           ja 0x80484cf
+
+Compare edx - 0x61 with 0x19
+So the 9th char of sum of first 8 chars must <= 0x19 + 0x61 = 0x7a
+It also must >= 0x61

@@ -14,6 +14,9 @@ List
 `2_mycrk_by_cli3nt
 <https://crackmes.one/crackme/5ab77f6633c5d40ad448cbfe>`_
 
+`3_kgm1_by_ascii
+<https://crackmes.one/crackme/5ab77f6533c5d40ad448cb97>`_
+
 Tools
 =====
 
