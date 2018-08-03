@@ -27,7 +27,7 @@ Tools
 =====
 
 `Radare2
-<https://www.radare.org/r/down.html>`_
+<https://github.com/radare/radare2>`_
 
 `OllyDbg
 <http://www.ollydbg.de/>`_
