@@ -1,0 +1,103 @@
+Use radare2
+
+	r2 ./keygenme228
+
+In radare2, find all symbols
+
+	fs symbols
+	f
+
+0x08048710 14 str.Enter_serial:
+0x08048721 28 str.Greetings_from_Penguinland
+0x0804850c 256 main
+
+Analysis main
+
+	aa
+	pdf@main
+
+
+0x08048543      8d442415       lea eax, [s]                ; 0x15 ; 21
+0x08048547      890424         mov dword [esp], eax        ; const char *s
+0x0804854a      e8a1feffff     call sym.imp.strlen         ; size_t strlen(const char *s)
+0x0804854f      898424140100.  mov dword [local_114h], eax
+0x08048556      83bc24140100.  cmp dword [local_114h], 2   ; [0x2:4]=-1 ; 2
+0x0804855e      7f0c           jg 0x804856c
+0x08048560      c70424010000.  mov dword [esp], 1          ; int status
+0x08048567      e874feffff     call sym.imp.exit           ; void exit(int status)
+
+The input serial must have more than 2 chars, or program will exit
+
+
+|       `-> 0x0804856c      c78424180100.  mov dword [local_118h], 1
+|           0x08048577      c784241c0100.  mov dword [local_11ch], 0
+|       ,=< 0x08048582      eb44           jmp 0x80485c8
+|      .--> 0x08048584      8d542415       lea edx, [s]                ; 0x15 ; 21
+|      :|   0x08048588      8b84241c0100.  mov eax, dword [local_11ch] ; [0x11c:4]=-1 ; 284
+|      :|   0x0804858f      01d0           add eax, edx
+|      :|   0x08048591      0fb600         movzx eax, byte [eax]
+|      :|   0x08048594      0fbed0         movsx edx, al
+|      :|   0x08048597      8b84241c0100.  mov eax, dword [local_11ch] ; [0x11c:4]=-1 ; 284
+|      :|   0x0804859e      83c001         add eax, 1
+|      :|   0x080485a1      0fb6440415     movzx eax, byte [esp + eax + 0x15] ; [0x15:1]=255 ; 21
+|      :|   0x080485a6      0fbec0         movsx eax, al
+|      :|   0x080485a9      89d1           mov ecx, edx
+|      :|   0x080485ab      29c1           sub ecx, eax
+|      :|   0x080485ad      89c8           mov eax, ecx
+|      :|   0x080485af      85c0           test eax, eax	; eax <= 0 then jump
+|     ,===< 0x080485b1      7e0d           jle 0x80485c0
+|     |:|   0x080485b3      c78424180100.  mov dword [local_118h], 0
+|    ,====< 0x080485be      eb1b           jmp 0x80485db
+|    |`---> 0x080485c0      8384241c0100.  add dword [local_11ch], 1
+|    | :`-> 0x080485c8      8b8424140100.  mov eax, dword [local_114h] ; [0x114:4]=-1 ; 276
+|    | :    0x080485cf      83e801         sub eax, 1
+|    | :    0x080485d2      3b84241c0100.  cmp eax, dword [local_11ch] ; [0x11c:4]=-1 ; 284
+|    | `==< 0x080485d9      7fa9           jg 0x8048584		; jump if strlen - 1 > counter
+
+s is input serial
+[local_114h] is strlen of input serial
+[local_11ch] is counter, run from 0 to strlen - 2
+[local_118h] is 1 when all i, s[i] - s[i + 1] <= 0
+	     is 0 when exists i, s[i] - s[i + 1] > 0
+if [local_118h] == 1, or all i s[i] - s[i + 1] <= 0 => good boy
+if [local_118h] == 0, the program continues
+
+|    `----> 0x080485db      83bc24180100.  cmp dword [local_118h], 0
+|       ,=< 0x080485e3      756c           jne 0x8048651
+|       |   0x080485e5      c78424180100.  mov dword [local_118h], 0xffffffff ; [0xffffffff:4]=-1 ; -1
+|       |   0x080485f0      8b8424140100.  mov eax, dword [local_114h] ; [0x114:4]=-1 ; 276
+|       |   0x080485f7      83e801         sub eax, 1
+|       |   0x080485fa      8984241c0100.  mov dword [local_11ch], eax
+|      ,==< 0x08048601      eb44           jmp 0x8048647
+|     .---> 0x08048603      8d542415       lea edx, [s]                ; 0x15 ; 21
+|     :||   0x08048607      8b84241c0100.  mov eax, dword [local_11ch] ; [0x11c:4]=-1 ; 284
+|     :||   0x0804860e      01d0           add eax, edx
+|     :||   0x08048610      0fb600         movzx eax, byte [eax]
+|     :||   0x08048613      0fbed0         movsx edx, al
+|     :||   0x08048616      8b84241c0100.  mov eax, dword [local_11ch] ; [0x11c:4]=-1 ; 284
+|     :||   0x0804861d      83c001         add eax, 1
+|     :||   0x08048620      0fb6440415     movzx eax, byte [esp + eax + 0x15] ; [0x15:1]=255 ; 21
+|     :||   0x08048625      0fbec0         movsx eax, al
+|     :||   0x08048628      89d1           mov ecx, edx
+|     :||   0x0804862a      29c1           sub ecx, eax
+|     :||   0x0804862c      89c8           mov eax, ecx
+|     :||   0x0804862e      85c0           test eax, eax
+|    ,====< 0x08048630      790d           jns 0x804863f		; jump if eax >= 0
+|    |:||   0x08048632      c78424180100.  mov dword [local_118h], 0
+|   ,=====< 0x0804863d      eb12           jmp 0x8048651
+|   |`----> 0x0804863f      83ac241c0100.  sub dword [local_11ch], 1
+|   | :`--> 0x08048647      83bc241c0100.  cmp dword [local_11ch], 0
+|   | `===< 0x0804864f      7fb2           jg 0x8048603
+|   `---`-> 0x08048651      83bc24180100.  cmp dword [local_118h], 0
+|       ,=< 0x08048659      750c           jne 0x8048667
+|       |   0x0804865b      c70424010000.  mov dword [esp], 1          ; int status
+|       |   0x08048662      e879fdffff     call sym.imp.exit           ; void exit(int status)
+|       `-> 0x08048667      c70424218704.  mov dword [esp], str.Greetings_from_Penguinland ; [0x8048721:4]=0x65657247 ; "Greetings from Penguinland!" ; const char *s
+|           0x0804866e      e84dfdffff     call sym.imp.puts           ; int puts(const char *s)
+
+It sets [local_118h] = -1
+[local_114h] still be strlen
+[local_11ch] is counter from strlen - 1 to 1
+[local_118h] is -1 when all i >= 1, s[i] - s[i + 1] >= 0
+	     is 0 when exists i >= 1, s[i] - s[i + 1] < 0
+[local_118h] != 0 => good boy

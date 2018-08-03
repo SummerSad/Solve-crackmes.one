@@ -20,6 +20,9 @@ List
 `4_crackme_nasm_by_rezk2ll
 <https://crackmes.one/crackme/5ab77f6533c5d40ad448cb71>`_
 
+`5_keygenme228_by_profdraculare
+<https://crackmes.one/crackme/5ab77f6433c5d40ad448caf9>`_
+
 Tools
 =====
 
