@@ -17,6 +17,9 @@ List
 `3_kgm1_by_ascii
 <https://crackmes.one/crackme/5ab77f6533c5d40ad448cb97>`_
 
+`4_crackme_nasm_by_rezk2ll
+<https://crackmes.one/crackme/5ab77f6533c5d40ad448cb71>`_
+
 Tools
 =====
 
