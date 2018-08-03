@@ -23,6 +23,9 @@ List
 `5_keygenme228_by_profdraculare
 <https://crackmes.one/crackme/5ab77f6433c5d40ad448caf9>`_
 
+`6_easy_crackme_2_by_lord
+<https://crackmes.one/crackme/5ab77f6433c5d40ad448caf9>`_
+
 Tools
 =====
 

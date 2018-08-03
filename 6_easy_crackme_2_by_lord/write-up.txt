@@ -1,0 +1,47 @@
+Use radare2
+
+	r2 ./cm1eng
+
+In radare2, find all symbols
+
+	fs symbols
+	f
+
+0x08048080 118 entry0
+
+Analysis entry0
+
+	aa
+	pdf@entry0
+
+0x08048096      ba00010000     mov edx, 0x100              ; 256
+0x0804809b      b91b910408     mov ecx, 0x804911b
+0x080480a0      bb00000000     mov ebx, 0
+0x080480a5      b803000000     mov eax, 3
+0x080480aa      cd80           int 0x80
+
+Input password is saved at 0x804911b
+
+|           0x080480ac      be26910408     mov esi, str.QTBXCTU        ; 0x8049126 ; "QTBXCTU"
+|           0x080480b1      89f7           mov edi, esi
+|           0x080480b3      31db           xor ebx, ebx
+|           0x080480b5      fc             cld
+|       .-> 0x080480b6      ac             lodsb al, byte [esi]
+|       :   0x080480b7      3421           xor al, 0x21
+|       :   0x080480b9      aa             stosb byte es:[edi], al
+|       :   0x080480ba      43             inc ebx
+|       :   0x080480bb      81fb07000000   cmp ebx, 7                  ; 7
+|      ,==< 0x080480c1      7402           je 0x80480c5
+|      |`=< 0x080480c3      e2f1           loop 0x80480b6
+
+Each char of strings "QTBXCTU" xor 0x21 to create new strings
+
+0x080480c5      be1b910408     mov esi, 0x804911b
+0x080480ca      bf26910408     mov edi, str.QTBXCTU        ; 0x8049126 ; "QTBXCTU"
+0x080480cf      b907000000     mov ecx, 7
+0x080480d4      fc             cld
+0x080480d5      f3a6           repe cmpsb byte [esi], byte ptr es:[edi] ; [0x170000001c:1]=255 ; 98784247836
+
+Compare input password with new strings, if they are matched => good boy
+
+Password is pucybut
