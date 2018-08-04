@@ -1,0 +1,19 @@
+Use radare2
+
+	r2 ./blah
+
+In radare2, find all symbols
+
+	fs symbols
+	f
+
+0x08048094 45 entry0
+
+Analysis entry0
+
+	pdf@entry0
+
+0x0804809d      3dadde0000     cmp eax, 0xdead
+0x080480a2      7516           jne 0x80480ba
+
+Password is 0xdead or 57005
